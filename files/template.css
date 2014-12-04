@@ -1,0 +1,230 @@
+/*
+ * template.css
+ * Copyright (c) 2004-2011 Mark H. P. Lord. All rights reserved.
+*/
+
+body { 
+	background: #fff url(blue-gradient.png) repeat-x fixed;
+	color: #000;
+	margin: 0 0 25px 0;
+	padding: 0;
+	font-family: "helvetica neue", helvetica, arial, sans-serif;
+	font-size: 10pt;
+	text-align: center;
+}
+
+img {
+	border: 0;
+}
+
+table.topMostTable {
+	/* the #forceLeftColumnWidth and #forceRightColumnWidth elements should override this width */
+	width: 50em;
+	margin: 0 auto;
+	text-align: left;
+}
+
+hr {
+	height: 1px;
+	border-left: none;
+	border-top: none;
+	border-right: none;
+	border-bottom: 1px solid #bcd;
+}
+
+a:link {
+	color: #789;
+	text-decoration: underline;
+}
+
+a:visited {
+	color: #567;
+	text-decoration: underline;
+}
+
+a:active, a:hover {
+	color: #c33;
+	text-decoration: underline;
+}
+
+h1,h2,h3,h4,h5,h6 {
+	color: #000;
+}
+
+h1 { 
+	margin: 10px 0 0.62em 0;
+	font-weight: bold;
+	padding: 0;
+	font-size: 170%;
+}
+
+h2 {
+	font-size: 140%;
+	font-weight: bold;
+	margin: 0.8em 0;
+	padding: 0;
+}
+
+h3 {
+	font-size: 115%;
+	font-weight: bold;
+	margin: 0.97em 0;
+	padding: 0;
+}
+
+h4, h5, h6 {
+	font-size: 100%;
+	font-weight: bold;
+	margin: 1.12em 0;
+	padding: 0;
+}
+
+h1,h2,h3,h4,h5,h6 {
+    /*text-shadow: rgba(128,128,128,1.0) 1px 1px 2px;*/
+}
+
+form {
+	/* Internet Explorer needs this */
+	display: inline;
+}
+
+td.leftColumn {
+	background-color: #fff;
+	padding: 6px 20px 20px 20px;
+}
+
+td.rightColumn {
+	background-color: #eef0f4;
+	color: #000;
+	padding: 6px 20px 20px 20px;
+}
+
+.sideBarHeading {
+	font-weight: bold;
+	margin: 10px 0 10px 0;
+	padding: 0;
+	color: #333844;
+}
+
+.sideBarContent {
+	margin: 10px 0 14px 0;
+	padding: 0;
+}
+
+ul.sideBarList, td.rightColumn ul {
+	list-style: disc outside none;
+	margin: 0;
+	padding: 0 0 0 1.5em;
+	color: #333844;
+}
+
+td.rightColumn a:link, td.rightColumn a:visited {
+	color: #789;
+	text-decoration: none;
+}
+
+td.rightColumn a:hover, td.rightColumn a:active {
+	color: #c33;
+	text-decoration: none;
+}
+
+td.rightColumn a.imgLink:link, td.rightColumn a.imgLink:visited, td.rightColumn a.imgLink:hover, td.rightColumn a.imgLink:active {
+	border-style: none;
+}
+
+.topRowTable {
+	border-left: 1px solid #9ab;
+	border-right: 1px solid #9ab;
+}
+
+.topRow {
+	padding: 6px 20px 6px 20px;
+	background-color: #9ab;
+	font-family: "trebuchet ms", sans-serif;
+}
+
+.topRow2 {
+	height: 4px;
+	background-color: #bcd;
+}
+
+.bottomRow {
+	height: 4px;
+	background-color: #bcd;
+}
+
+.mainTable {
+	border-left: 1px solid #9ab;
+	border-right: 1px solid #9ab;
+}
+
+.bottomTable {
+	border-left: 1px solid #9ab;
+	border-right: 1px solid #9ab;
+	border-bottom: 1px solid #9ab;
+	background-color: #bcd;
+}
+
+.topRow td, .topRow a:link, .topRow a:visited, .topRow a:hover, .topRow a:active, .topRow p {
+	font-size: 225%;
+	color: #fff;
+	border-bottom: none;
+	margin: 0;
+	padding: 0;
+	text-shadow: rgba(102,119,136,1.0) 1px 1px 4px;
+	text-decoration: none
+}
+
+.copyright {
+	font-size: 80%;
+	margin-top: 20px;
+    color: #bcd;
+}
+
+.copyright a, .copyright a:visited {
+	color: #bcd;
+}
+
+.copyright a:active, .copyright a:hover {
+	color: #c33;
+}
+
+code, .code, pre {
+	font-family: "menlo", "panic sans", "dejavu sans mono", "consola", "lucida console", monospace;
+	font-size: 8pt;
+}
+
+.evenRow {
+	background-color: #eef0f4;
+}
+
+.oddRow {
+}
+
+.error {
+	font-weight: bold;
+	color: #e00;
+}
+
+blockquote {
+	font-style: italic;
+}
+
+#forceLeftColumnWidth {
+	margin: 0;
+	padding: 0;
+	height: 1px;
+	width: 50em;
+}
+
+#forceRightColumnWidth {
+	margin: 0;
+	padding: 0;
+	height: 1px;
+	width: 10em;
+}
+
+.flash {
+	font-weight: bold;
+	color: #789;
+}
