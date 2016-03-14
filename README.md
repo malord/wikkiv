@@ -5,11 +5,40 @@ wikkiv is a simple PHP wiki web application, with support for multiple users, no
 ## Installation ##
 
 - Copy wikkiv.php, eyesonly.php, markdown.php, htaccess and the files folder to your server.
-- Set up a database and edit eyesonnly.php, make sure $INIT_ENABLED is set to TRUE.
-- Set up the htaccess for your domain, then rename it to .htaccess.
+- Set up a database and edit eyesonnly.php with the credentials, and set $INIT_ENABLED to TRUE.
+- (Apache only) Set up the htaccess file for your domain, then rename it to ".htaccess".
 - Go to the wiki home page with ?init=1, e.g., "http://example.com/?init=1".
-- Log in with username admin, password admin to verify it's working, then change the password.
-- Edit your eyesonly.php again, changing $INIT_ENABLED to FALSE.
+- Log in with username admin, password admin to verify it's working, then change the admin password.
+- Edit your eyesonly.php again, changing $INIT_ENABLED back to FALSE.
+
+If you're using nginx, rename wikkiv.php to index.php and you'll want a server config like this (this is for Ubuntu 14.04):
+
+```
+server {
+    listen 80;
+    server_name www.example.com;
+
+    root /home/wiki/www/;
+    index index.php;
+
+    client_max_body_size 20m;
+    location / {
+        try_files $uri $uri/ /index.php?q=$uri&$args;
+        proxy_read_timeout 300;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/var/run/php5-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_read_timeout 300s;
+    }
+}
+```
+
+Optional, but recommended: move eyesonly.php outside your www root and alter wikkiv.php to change the `require_once` path.
 
 ## Page Formatting ##
 
@@ -47,6 +76,6 @@ When you edit a page you can choose which users can see, edit or administer a pa
         Prevent these users editing this page:
         Allow these users to edit this page's permissions:
         
-All pages inherit their permissions from the index page of their section.
+All pages inherit their permissions from the index page of their section. The `world` user represents all users except admins (including logged in users, so "Prevent these users: world" will restrict anyone not in the "Allow these users" box. Separate multiple usernames with spaces.
 
 If you muck up the permissions of a page, an admin user can always fix it.

@@ -19,11 +19,11 @@
 	$PATH_TO_FILES_ON_WEB = "/files";
 
 	// You must update htaccess if you change this
-	$PAGE_URL_PREFIX = "/wiki/";
+	$PAGE_URL_PREFIX = "/";
 	
-	$FRONT_PAGE_LINK = "http://example.com/wiki/";
+	$FRONT_PAGE_LINK = "http://example.com/";
 	$SITE_NAME = "My Wiki";
 
-	$_POWERED = "Powered by <a href=\"http://malord.com/wikkiv/\">wikkiv</a>.";
+	$_POWERED = "Powered by <a href=\"https://www.hrunk.com/wikkiv/\">wikkiv</a>.";
 	$DEFAULT_COPYRIGHT = "Your Copyright Here. $_POWERED";
 ?>

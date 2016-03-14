@@ -1,6 +1,7 @@
 /*
  * template.css
  * Copyright (c) 2004-2011 Mark H. P. Lord. All rights reserved.
+ * Copyright (c) 2016 Hrunk Ltd. All rights reserved.
 */
 
 body { 
@@ -18,8 +19,6 @@ img {
 }
 
 table.topMostTable {
-	/* the #forceLeftColumnWidth and #forceRightColumnWidth elements should override this width */
-	width: 50em;
 	margin: 0 auto;
 	text-align: left;
 }
@@ -84,19 +83,21 @@ h1,h2,h3,h4,h5,h6 {
 }
 
 form {
-	/* Internet Explorer needs this */
 	display: inline;
 }
 
 td.leftColumn {
 	background-color: #fff;
 	padding: 6px 20px 20px 20px;
+	width: 50em;
+	max-width: 50em;
 }
 
 td.rightColumn {
 	background-color: #eef0f4;
 	color: #000;
 	padding: 6px 20px 20px 20px;
+	min-width: 10em;
 }
 
 .sideBarHeading {
@@ -189,6 +190,12 @@ td.rightColumn a.imgLink:link, td.rightColumn a.imgLink:visited, td.rightColumn 
 	color: #c33;
 }
 
+pre {
+	display: block;
+	overflow-x: auto;
+	overflow-y: none;
+}
+
 code, .code, pre {
 	font-family: "menlo", "panic sans", "dejavu sans mono", "consola", "lucida console", monospace;
 	font-size: 8pt;
@@ -208,20 +215,6 @@ code, .code, pre {
 
 blockquote {
 	font-style: italic;
-}
-
-#forceLeftColumnWidth {
-	margin: 0;
-	padding: 0;
-	height: 1px;
-	width: 50em;
-}
-
-#forceRightColumnWidth {
-	margin: 0;
-	padding: 0;
-	height: 1px;
-	width: 10em;
 }
 
 .flash {

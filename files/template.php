@@ -33,8 +33,6 @@ function doTemplate($htmlContent, $htmlTitle, $htmlFlashes, &$props, &$callback)
 					</div>
 <div class="copyright"><?php
 	if (isset($props["copyright"])) echo($props["copyright"]); else { echo($DEFAULT_COPYRIGHT); } ?></div>
-
-					<div id="forceLeftColumnWidth"></div>
 				</td>
 				<td class="rightColumn" valign="top">
 					
@@ -67,8 +65,6 @@ function doTemplate($htmlContent, $htmlTitle, $htmlFlashes, &$props, &$callback)
 						<?php } ?>
 						
 					</div>
-
-					<div id="forceRightColumnWidth"></div>
 				</td>
 			</tr>
 		</table>

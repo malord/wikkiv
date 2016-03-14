@@ -1,7 +1,8 @@
 <?php
 //
-// wikkiv 1.0.1
+// wikkiv 1.1.0
 // Copyright (c) 2006-2012 Mark H. P. Lord.
+// Copyright (c) 2016 Hrunk Ltd.
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the author be held liable for any damages arising from the
@@ -32,7 +33,7 @@ require_once("eyesonly.php");  // if possible, alter this so that the file isn't
 // for the database you are using) are kept.
 //
 
-function &constructDatabase() {
+function constructDatabase() {
 	// These globals courtesy of eyesonly.php.
 	global $DB_HOST, $DB_USER, $DB_PASS, $DB_NAME, $DB_PREFIX, $USERS_TABLE_NAME;
 		
@@ -151,7 +152,6 @@ function computeScriptName() {
 function pageLink($pageId) {
 	// Merge the page ID in to the query string
 	return redirect($pageId, "");
-	//return computeScriptName() . "?p=" . urlencode($pageId);
 }
 
 function normaliseText($text) {
@@ -232,12 +232,30 @@ function findWithinHtml($html, $before, $after) {
 	return unhtmlspecialchars(trim(strip_tags(substr($html, $idx + $beforelen, $idx2 - $idx - $beforelen))));
 }
 
+/// Generate a button that posts to a URL
+function postButton($title, $url) {
+	$escapedTitle = htmlspecialchars($title);
+	$c = '<form action="' . $url . '" method="POST">';
+	$c .= '<input type="submit" name="post_button" value="' . $escapedTitle . '">';
+	$c .= '</form>';
+	return $c;
+}
+
+/// Generate a button that posts to a URL
+function getButton($title, $url) {
+	$escapedTitle = htmlspecialchars($title);
+	$c = '<form action="' . $url . '" method="GET">';
+	$c .= '<input type="submit" value="' . $escapedTitle . '">';
+	$c .= '</form>';
+	return $c;
+}
+
 //
 // Provides access to the results of an SQL query on a Database instance.
 //
 
 class QueryResult {
-	function QueryResult($sql, &$conn) {
+	function QueryResult($sql, $conn) {
 		if ($conn) {
 			$this->_result = mysql_query($sql, $conn);
 			
@@ -324,7 +342,7 @@ class Database {
 		return $this->_conn;
 	}
 	
-	function &query($sql) {
+	function query($sql) {
 		return new QueryResult($sql, $this->connection());
 	}
 }
@@ -336,10 +354,10 @@ class Database {
 
 class Wiki {
 	function Wiki() {
-		$this->_db =& constructDatabase();
+		$this->_db = constructDatabase();
 	}
 	
-	function &db() {
+	function db() {
 		return $this->_db;
 	}
 	
@@ -347,7 +365,7 @@ class Wiki {
 		return $this->_db->prefix("pages");
 	}
 	
-	function &query($sql) {
+	function query($sql) {
 		return $this->_db->query($sql);
 	}
 	
@@ -367,7 +385,7 @@ class Wiki {
 	
 	function user() {
 		if (! isset($this->_user)) {
-			$this->_user =& new User($this, $this->userId());
+			$this->_user = new User($this, $this->userId());
 		}
 		
 		return $this->_user;
@@ -405,8 +423,8 @@ class Wiki {
 		}
 	}
 	
-	function setOutputProperties(&$outputManager, $page) {
-		$user =& $this->user();
+	function setOutputProperties($outputManager, $page) {
+		$user = $this->user();
 		
 		if ($page) {
 			$pageId = $page->id();
@@ -460,8 +478,8 @@ class Wiki {
 //
 
 class User {
-	function User(&$wiki, $id) {
-		$this->_wiki =& $wiki;
+	function User($wiki, $id) {
+		$this->_wiki = $wiki;
 		$this->_id = $id;
 		
 		if (! $id) {
@@ -489,7 +507,7 @@ class User {
 		$tableName = $this->tableName();
 		$escapedId = addslashes(strtolower($this->_id));
 		
-		$qr =& $this->_wiki->query("SELECT * FROM $tableName WHERE Login='$escapedId'");
+		$qr = $this->_wiki->query("SELECT * FROM $tableName WHERE Login='$escapedId'");
 		
 		if ($qr->error() || ! $qr->hasRow()) {
 			$this->_valid = false;
@@ -516,9 +534,9 @@ class User {
 		}
 		
 		if (! $this->_valid) {
-			$qr =& $this->_wiki->query("INSERT INTO $tableName(Login,Password,Admin) VALUES('$escapedId','$escapedPassword',$escapedAdmin)");
+			$qr = $this->_wiki->query("INSERT INTO $tableName(Login,Password,Admin) VALUES('$escapedId','$escapedPassword',$escapedAdmin)");
 		} else {
-			$qr =& $this->_wiki->query("UPDATE $tableName SET Password='$escapedPassword',Admin=$escapedAdmin WHERE Login='$escapedId'");
+			$qr = $this->_wiki->query("UPDATE $tableName SET Password='$escapedPassword',Admin=$escapedAdmin WHERE Login='$escapedId'");
 		}
 		
 		if ($qr->error()) {
@@ -536,7 +554,7 @@ class User {
 		$tableName = $this->tableName();
 		$escapeId = addslashes(strtolower($this->_id));
 		
-		$qr =& $this->_wiki->query("DELETE FROM $tableName WHERE Login='$escapeId'");
+		$qr = $this->_wiki->query("DELETE FROM $tableName WHERE Login='$escapeId'");
 
 		if ($qr->error()) {
 			return false;
@@ -588,8 +606,8 @@ class User {
 //
 
 class Folder {
-	function Folder(&$wiki, $id) {
-		$this->_wiki =& $wiki;
+	function Folder($wiki, $id) {
+		$this->_wiki = $wiki;
 		$this->_id = $id;
 		$this->_urlId = rawurlencode(strtolower($id));
 		$this->_path = $wiki->pathToFolder($this->_urlId);
@@ -620,7 +638,7 @@ class Folder {
 		}
 	}
 	
-	function &listFiles() {
+	function listFiles() {
 		$dir = @opendir($this->_path);
 		if (! $dir) {
 			return array();
@@ -663,9 +681,9 @@ class Folder {
 //
 
 class Page {
-	function Page(&$wiki, $id, $load = true) {
+	function Page($wiki, $id, $load = true) {
 		$this->_loaded = false;
-		$this->_wiki =& $wiki;
+		$this->_wiki = $wiki;
 		$this->_id = $id;
 		$this->_related = array();
 		
@@ -677,7 +695,7 @@ class Page {
 			} else {
 				$sectionPageId = joinSectionAndId($this->_section, "");
 			
-				$this->_sectionPage =& new Page($wiki, $sectionPageId);
+				$this->_sectionPage = new Page($wiki, $sectionPageId);
 			}
 		
 			$this->tryLoad();
@@ -690,7 +708,7 @@ class Page {
 		}
 	}
 	
-	function &relatedPage($relation) {
+	function relatedPage($relation) {
 		$relation = strtolower($relation);
 		if (isset($this->_related[$relation])) {
 			return $this->_related[$relation];
@@ -698,35 +716,35 @@ class Page {
 
 		$relAppend = "$relation";
 		
-		$p =& new Page($this->_wiki, $this->_id . $relAppend);
+		$p = new Page($this->_wiki, $this->_id . $relAppend);
 		if (! $p->_loaded) {
-			$p =& new Page($this->_wiki, joinSectionAndId($this->_section, $relAppend));
+			$p = new Page($this->_wiki, joinSectionAndId($this->_section, $relAppend));
 				
 			if (! $p->_loaded) {
-				$p =& new Page($this->_wiki, $relAppend);
+				$p = new Page($this->_wiki, $relAppend);
 			}
 		}
 		
 		if ($p->_loaded) {
-			$this->_related[$relation] =& $p;
+			$this->_related[$relation] = $p;
 			return $p;
 		}
 		
 		return null;
 	}
 	
-	function &wiki() {
+	function wiki() {
 		return $this->_wiki;
 	}
 	
 	function _createSectionPage() {
-		$user =& $this->_wiki->user();
+		$user = $this->_wiki->user();
 		
 		if (! $user->canCreateSections()) {
 			return null;
 		}
 		
-		$newPage =& new Page($this->_wiki, joinSectionAndId($this->_section, ""), false);
+		$newPage = new Page($this->_wiki, joinSectionAndId($this->_section, ""), false);
 
 		$newPage->setField("rawText", "");
 		$newPage->setField("html", "");
@@ -784,7 +802,7 @@ class Page {
 		$tableName = $this->_wiki->pagesTableName();
 		$escapedId = addslashes(strtolower($this->_id));
 		
-		$qr =& $this->_wiki->query("SELECT * FROM $tableName WHERE id='$escapedId' ORDER BY modified DESC LIMIT 1");
+		$qr = $this->_wiki->query("SELECT * FROM $tableName WHERE id='$escapedId' ORDER BY modified DESC LIMIT 1");
 		
 		if ($qr->error() || ! $qr->hasRow()) {
 			$this->_loaded = false;
@@ -825,8 +843,7 @@ class Page {
 			return true;
 		}
 		
-		return strpos(" " . $this->field("allowView") . " ", " $userId ") 
-			!== false;
+		return strpos(" " . $this->field("allowView") . " ", " $userId ") !== false;
 	}
 	
 	function _userIdDeniedView($userId) {
@@ -834,8 +851,7 @@ class Page {
 			return false;
 		}
 		
-		return strpos(" " . $this->field("denyView") . " ", " $userId ") 
-			!== false;
+		return strpos(" " . $this->field("denyView") . " ", " $userId ") !== false;
 	}
 	
 	function _userIdAllowedEdit($userId) {
@@ -843,8 +859,7 @@ class Page {
 			return false;
 		}
 		
-		return strpos(" " . $this->field("allowEdit") . " ", " $userId ") 
-			!== false;
+		return strpos(" " . $this->field("allowEdit") . " ", " $userId ") !== false;
 	}
 
 	function _userIdDeniedEdit($userId) {
@@ -852,8 +867,7 @@ class Page {
 			return false;
 		}
 		
-		return strpos(" " . $this->field("denyEdit") . " ", " $userId ") 
-			!== false;
+		return strpos(" " . $this->field("denyEdit") . " ", " $userId ") !== false;
 	}
 
 	function _userIdAllowedAdmin($userId) {
@@ -861,12 +875,11 @@ class Page {
 			return false;
 		}
 		
-		return strpos(" " . $this->field("allowAdmin") . " ", " $userId ") 
-			!== false;
+		return strpos(" " . $this->field("allowAdmin") . " ", " $userId ") !== false;
 	}
 
 	function userCanAdmin() {
-		$user =& $this->_wiki->user();
+		$user = $this->_wiki->user();
 		$userId = $user->idForPermissionCheck();
 
 		if ($user->isAdmin()) {
@@ -885,7 +898,7 @@ class Page {
 	}
 	
 	function userCanEdit() {
-		$user =& $this->_wiki->user();
+		$user = $this->_wiki->user();
 		if ($this->userCanAdmin()) {
 			return true;
 		}
@@ -910,7 +923,7 @@ class Page {
 	}
 	
 	function userCanView() {
-		$user =& $this->_wiki->user();
+		$user = $this->_wiki->user();
 		if ($this->userCanAdmin()) {
 			return true;
 		}
@@ -965,7 +978,7 @@ class Page {
 		$sql = "INSERT INTO $pageTableName(id, rawText, html, modified, userId, allowView, denyView, allowEdit, denyEdit, allowAdmin, title, template) " .
 		"VALUES ('$escapedPageId', '$escapedRawText', '$escapedHtml','$modified','$escapedUserId','$escapedAllowView','$escapedDenyView','$escapedAllowEdit','$escapedDenyEdit','$escapedAllowAdmin','$escapedTitle','$escapedTemplate')";
 			
-		$result =& $this->_wiki->query($sql);
+		$result = $this->_wiki->query($sql);
 				
 		return $result->error();
 	}
@@ -976,9 +989,9 @@ class Page {
 //
 
 class Parser {
-	function Parser(&$page, $text) {
-		$this->_page =& $page;
-		$this->_wiki =& $page->wiki();
+	function Parser($page, $text) {
+		$this->_page = $page;
+		$this->_wiki = $page->wiki();
 		$this->_html = null;
 		$this->_title = null;
 		$this->_parse($text);
@@ -1008,9 +1021,9 @@ class Parser {
 			
 			$this->normalizeId($filePage, $filePage, $filePageInnerId);
 			
-			$folder =& new Folder($this->_wiki, $filePage);
+			$folder = new Folder($this->_wiki, $filePage);
 		} else {		
-			$folder =& new Folder($this->_wiki, $this->_page->id());
+			$folder = new Folder($this->_wiki, $this->_page->id());
 		}
 		
 		if (! $explicitTitle) {
@@ -1045,9 +1058,9 @@ class Parser {
 			
 			$this->normalizeId($filePage, $filePage, $filePageInnerId);
 			
-			$folder =& new Folder($this->_wiki, $filePage);
+			$folder = new Folder($this->_wiki, $filePage);
 		} else {		
-			$folder =& new Folder($this->_wiki, $this->_page->id());
+			$folder = new Folder($this->_wiki, $this->_page->id());
 		}
 		
 		if (! $explicitTitle) {
@@ -1085,7 +1098,7 @@ class Parser {
 		if ($title == "" || $title == "_") {
 			// Might want to do this in more situations? Why doesn't this
 			// work: {{}{_contact}} (i.e., an explicit, empty title).
-			$page =& new Page($this->_page->wiki(), $id);
+			$page = new Page($this->_page->wiki(), $id);
 			if ($page->loaded()) {
 				$htmlTitle = htmlspecialchars($page->title());
 			} else {
@@ -1166,11 +1179,11 @@ class Parser {
 //
 
 class Action {
-	function content(&$outputManager) {
+	function content($outputManager) {
 		return "<p>No Action.</p>";
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "No title";
 	}
 	
@@ -1190,8 +1203,8 @@ class Action {
 //
 
 class PageAction extends Action {
-	function PageAction(&$page) {
-		$this->_page =& $page;
+	function PageAction($page) {
+		$this->_page = $page;
 	}
 	
 	function request($name) {
@@ -1209,7 +1222,7 @@ class PageAction extends Action {
 		return findWithinHtml($this->_page->field("html"), "<!--$name:", "-->");
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return htmlspecialchars($this->_page->title());
 	}
 }
@@ -1263,8 +1276,8 @@ class OutputManager {
 		$this->_template = null;
 	}
 	
-	function setAction(&$action) {
-		$this->_action =& $action;
+	function setAction($action) {
+		$this->_action = $action;
 	}
 	
 	function addFlash($flash) {
@@ -1279,7 +1292,7 @@ class OutputManager {
 		}
 	}
 	
-	function emit(&$template) {
+	function emit($template) {
 		$content = $this->_action->content($this);
 		$title = $this->_action->title($this);
 			
@@ -1292,9 +1305,9 @@ class OutputManager {
 //
 
 class EditPageAction extends PageAction {
-	function EditPageAction(&$page) {
+	function EditPageAction($page) {
 		$this->PageAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 		$this->_isNew = false;
 	}
 	
@@ -1314,7 +1327,7 @@ class EditPageAction extends PageAction {
 		return "";
 	}
 	
-	function content(&$outputManager) {
+	function content($outputManager) {
 		$c = "";
 
 		$pageId = $this->_page->id();
@@ -1336,7 +1349,7 @@ class EditPageAction extends PageAction {
 		$template = $this->postOrField("template");
 		
 		if ($posted) {
-			$parser =& new Parser($this->_page, $text);
+			$parser = new Parser($this->_page, $text);
 			$html = $parser->html();
 			$title = $parser->title();
 			if ($title === null) {
@@ -1357,7 +1370,7 @@ class EditPageAction extends PageAction {
 			}
 
 			if ($changed) {
-				$newPage =& new Page($this->_wiki, $pageId, false);
+				$newPage = new Page($this->_wiki, $pageId, false);
 				$newPage->setField("rawText", $text);
 				$newPage->setField("html", $html);
 				$newPage->setField("title", $title);
@@ -1424,6 +1437,7 @@ class EditPageAction extends PageAction {
 			$c .= "<input type=\"text\" name=\"allowAdmin\" size=\"40\" maxchars=\"100\" value=\"$htmlAllowAdmin\" /><br />";
 			$c .= "Template: ";
 			$c .= "<input type=\"text\" name=\"template\" size=\"40\" maxchars=\"80\" value=\"$htmlTemplate\" /><br />";
+			$c .= "<p>Separate usernames with spaces. The <code>world</code> username applies to all users, <code>admin</code> to any users with admin privileges.</p>";
 		}
 	
 		$c .= "</form>";
@@ -1434,7 +1448,7 @@ class EditPageAction extends PageAction {
 		return $c;
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "Editing: " . htmlspecialchars($this->_page->title());
 	}
 }
@@ -1444,12 +1458,12 @@ class EditPageAction extends PageAction {
 //
 
 class LogoutAction extends PageAction {
-	function LogoutAction(&$page) {
+	function LogoutAction($page) {
 		$this->PageAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
-	function content(&$outputManager) {
+	function content($outputManager) {
 		$this->_wiki->logout();
 		$outputManager->addFlash("You are now logged out.");
 		$redirectTo = redirect($this->_page->id(), "");
@@ -1457,7 +1471,7 @@ class LogoutAction extends PageAction {
 		exit;
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "Sign out";
 	}
 }
@@ -1467,12 +1481,12 @@ class LogoutAction extends PageAction {
 //
 
 class LoginAction extends PageAction {
-	function LoginAction(&$page) {
+	function LoginAction($page) {
 		$this->PageAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
-	function content(&$outputManager) {
+	function content($outputManager) {
 		$c = "";
 		
 		$posted = isset($_POST["posted"]);
@@ -1483,7 +1497,7 @@ class LoginAction extends PageAction {
 			$username = stripAutoSlashes($_POST["username"]);
 			$password = stripAutoSlashes($_POST["password"]);
 			
-			$user =& new User($this->_wiki, $username);
+			$user = new User($this->_wiki, $username);
 			if ($user->isValid() && $user->passwordIs($password)) {			
 				$done = $this->_wiki->login($username);
 			} else if ($user->isValid()) {
@@ -1527,7 +1541,7 @@ class LoginAction extends PageAction {
 		return $c;
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "Sign in";
 	}
 }
@@ -1537,12 +1551,12 @@ class LoginAction extends PageAction {
 //
 
 class ViewPageAction extends PageAction {
-	function ViewPageAction(&$page) {
+	function ViewPageAction($page) {
 		$this->PageAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
-	function content(&$outputManager) {
+	function content($outputManager) {
 		$c = $this->_page->field("html");
 		$this->_wiki->setOutputProperties($outputManager, $this->_page);
 		$outputManager->setProperty("viewThisPage", null);
@@ -1558,9 +1572,9 @@ class ViewPageAction extends PageAction {
 //
 
 class NoPageAction extends PageAction {
-	function NoPageAction(&$page) {
+	function NoPageAction($page) {
 		$this->PageAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
 	// Override this to change which page error information is pulled from.
@@ -1573,16 +1587,16 @@ class NoPageAction extends PageAction {
 		return "Page not found.";
 	}
 	
-	function content(&$outputManager) {
+	function content($outputManager) {
 		$c = "";
 		$errorPageId = $this->errorPageToDisplay();
 
-		$errorPage =& new Page($this->_wiki, joinSectionAndId($this->_page->section(), $errorPageId));
+		$errorPage = new Page($this->_wiki, joinSectionAndId($this->_page->section(), $errorPageId));
 			
 		if ($errorPage->loaded()) {
 			$c .= $errorPage->field("html");
 		} else {
-			$errorPage =& new Page($this->_wiki, $errorPageId);
+			$errorPage = new Page($this->_wiki, $errorPageId);
 		
 			if ($errorPage->loaded()) {
 				$c .= $errorPage->field("html");
@@ -1603,7 +1617,7 @@ class NoPageAction extends PageAction {
 		return $c;
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return $this->defaultMessage();
 	}
 }
@@ -1614,7 +1628,7 @@ class NoPageAction extends PageAction {
 //
 
 class PrivatePageAction extends NoPageAction {
-	function PrivatePageAction(&$page) {
+	function PrivatePageAction($page) {
 		$this->NoPageAction($page);
 	}
 	
@@ -1633,20 +1647,20 @@ class PrivatePageAction extends NoPageAction {
 //
 
 class InitPageAction extends PageAction {
-	function InitPageAction(&$page) {
+	function InitPageAction($page) {
 		$this->PageAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "Initialisation";
 	}
 	
-	function &createPagesTable() {
+	function createPagesTable() {
 		$pagesTableName = $this->_wiki->pagesTableName();
 		//$this->_wiki->query("DROP TABLE $pagesTableName");
 		return $this->_wiki->query(
-			"CREATE TABLE IF NOT EXIST $pagesTableName (" .
+			"CREATE TABLE IF NOT EXISTS $pagesTableName (" .
 			"id varchar(80) not null" .
 			",rawText text" .
 			",html text" .
@@ -1661,20 +1675,21 @@ class InitPageAction extends PageAction {
 			",template varchar(80)" .
 			",primary key(id, modified)" . 
 			")");
+
+		// TODO: create an index on $pagesTableName.id and another on $pagesTableName.modified
 	}
 	
-	function &addAdminUser() {
-		$db =& $this->_wiki->db();
+	function addAdminUser() {
+		$db = $this->_wiki->db();
 		$usersTableName = $db->usersTableName();
 		return $this->_wiki->query("INSERT INTO $usersTableName(Login,Password,Admin) VALUES('admin','admin',1)");
 	}
 	
-	function &createUsersTable() {
-		$db =& $this->_wiki->db();
+	function createUsersTable() {
+		$db = $this->_wiki->db();
 		$usersTableName = $db->usersTableName();
-		//$this->_wiki->query("DROP TABLE $usersTableName");
-		$result =& $this->_wiki->query(
-			"CREATE TABLE IF NOT EXIST $usersTableName (" .
+		$result = $this->_wiki->query(
+			"CREATE TABLE IF NOT EXISTS $usersTableName (" .
 			"UID int unsigned not null auto_increment primary key" .
 			",Login varchar(30)" .
 			",Name varchar(60)" .
@@ -1691,7 +1706,7 @@ class InitPageAction extends PageAction {
 		return $result;
 	}
 	
-	function reportSuccess(&$result, $doing) {
+	function reportSuccess($result, $doing) {
 		$this->_content .= "<h3>" . htmlspecialchars($doing) . "</h3>\r\n<p>";
 
 		$error = $result->error();
@@ -1704,7 +1719,7 @@ class InitPageAction extends PageAction {
 		$this->_content .= "</p>\r\n";
 	}
 	
-	function content(&$outputManager) {
+	function content($outputManager) {
 		$this->_content = "";
 		
 		$this->reportSuccess($this->createPagesTable(), "Create Pages table");
@@ -1723,16 +1738,16 @@ class InitPageAction extends PageAction {
 //
 
 class RebuildPageAction extends PageAction {
-	function RebuildPageAction(&$page) {
+	function RebuildPageAction($page) {
 		$this->PageAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "Rebuild";
 	}
 	
-	function content(&$outputManager) {
+	function content($outputManager) {
 		$user = $this->_wiki->user();
 		if (! $user->isAdmin()) {
 			return "Access denied";
@@ -1742,7 +1757,7 @@ class RebuildPageAction extends PageAction {
 		
 		$tableName = $this->_wiki->pagesTableName();
 		
-		$qr =& $this->_wiki->query("SELECT DISTINCT id FROM $tableName");
+		$qr = $this->_wiki->query("SELECT DISTINCT id FROM $tableName");
 		
 		if ($qr->error() || ! $qr->hasRow()) {
 			$c .= "<p class=\"error\">Unable to find any page IDs</p>";
@@ -1756,14 +1771,14 @@ class RebuildPageAction extends PageAction {
 			
 			foreach ($ids as $id) {
 				$c .= "<p>" . htmlspecialchars($id) . "</p>";
-				$p =& new Page($this->_wiki, $id);
+				$p = new Page($this->_wiki, $id);
 				if (! $p->loaded()) {
 					$c .= "<p class=\"error\">Error loading page</p>";
 				}
 				
 				$p->fixId();				
 				if ($p->id() != $id) {
-					$p2 =& new Page($this->_wiki, $p->id());
+					$p2 = new Page($this->_wiki, $p->id());
 					if ($p2->loaded()) {
 						$c .= "<p class=\"error\">Old style ID \"" . htmlspecialchars($id) . "\" ignored (already replaced)</p>";
 						continue;
@@ -1773,7 +1788,7 @@ class RebuildPageAction extends PageAction {
 				}
 				
 				if (! $oldStyle) {								
-					$parser =& new Parser($p, $p->field("rawText"));
+					$parser = new Parser($p, $p->field("rawText"));
 					$newHtml = $parser->html();
 					if ($newHtml != $p->field("html")) {
 						$p->setField("html", $newHtml);
@@ -1799,16 +1814,16 @@ class RebuildPageAction extends PageAction {
 //
 
 class ListPageAction extends PageAction {
-	function ListPageAction(&$page) {
+	function ListPageAction($page) {
 		$this->PageAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "List";
 	}
 	
-	function content(&$outputManager) {
+	function content($outputManager) {
 		$user = $this->_wiki->user();
 		if (! $user->canCreateSections()) {
 			return "Access denied";
@@ -1816,7 +1831,7 @@ class ListPageAction extends PageAction {
 
 		$tableName = $this->_wiki->pagesTableName();
 		
-		$qr =& $this->_wiki->query("SELECT DISTINCT id FROM $tableName");
+		$qr = $this->_wiki->query("SELECT DISTINCT id FROM $tableName");
 		
 		if ($qr->error() || ! $qr->hasRow()) {
 			$c .= "<p class=\"error\">Unable to find any page IDs</p>";
@@ -1836,6 +1851,9 @@ class ListPageAction extends PageAction {
 		
 		$this->_fields = $qr->nextRow();
 
+		$c .= postButton('Rebuild all pages', redirect("", null) . '?rebuild=1');
+		$c .= postButton('Delete all old versions', redirect("", null) . '?empty_trash=1');
+
 		return $c;
 	}
 }
@@ -1845,13 +1863,13 @@ class ListPageAction extends PageAction {
 //
 
 class FileManagerAction extends PageAction {
-	function FileManagerAction(&$page) {
+	function FileManagerAction($page) {
 		$this->PageAction($page);
-		$this->_wiki =& $page->wiki();
-		$this->_folder =& new Folder($page->wiki(), $page->id());
+		$this->_wiki = $page->wiki();
+		$this->_folder = new Folder($page->wiki(), $page->id());
 	}
 	
-	function doYesDelete(&$outputManager, $c) {
+	function doYesDelete($outputManager, $c) {
 		$delete = stripAutoSlashes($_GET["yesdelete"]);
 		
 		$redirect = redirect($this->_page->id(), "files");
@@ -1868,7 +1886,7 @@ class FileManagerAction extends PageAction {
 		exit;
 	}
 	
-	function doDelete(&$outputManager, $c) {
+	function doDelete($outputManager, $c) {
 		$delete = stripAutoSlashes($_GET["delete"]);
 		
 	    // TODO: make this a POST, not a GET!
@@ -1885,14 +1903,14 @@ class FileManagerAction extends PageAction {
 		
 		$c .= "<p>Delete: " . htmlspecialchars($delete) . "</p>";
 		$c .= "<p>Are you sure?</p>";
-		
-		$c .= "<p><a href=\"$yesLink\" rel=\"nofollow\">Yes, delete it</a></p>";
-		$c .= "<p><a href=\"$noLink\">No, don't delete it</a></p>";
+
+		$c .= postButton("Yes, delete it", $yesLink);
+		$c .= getButton("No, don't delete it", $noLink);
 		
 		return $c;
 	}
 	
-	function doUpload(&$outputManager, $c) {
+	function doUpload($outputManager, $c) {
 		$this->_folder->create();
 	
 		$file = $_FILES["userfile"]["tmp_name"];
@@ -1935,7 +1953,7 @@ class FileManagerAction extends PageAction {
 		exit;
 	}
 	
-	function content(&$outputManager) {
+	function content($outputManager) {
 		if (! $this->_page->userCanEdit()) {
 			$c = "<p>You are not permitted to edit this page.</p>";
 			$redirect = redirect($this->_page->id(), "");
@@ -1987,7 +2005,7 @@ class FileManagerAction extends PageAction {
 				$c .= "<td></td>";
 				$c .= "<td><a href=\"$viewLink\">View</a></td>";
 				$c .= "<td></td>";
-				$c .= "<td><a href=\"$deleteLink\">Delete</a></td>";
+				$c .= "<td>" . postButton("Delete", $deleteLink) . "</td>";
 				$c .= "</tr>";
 			}
 			$c .= "</table>";
@@ -2010,7 +2028,7 @@ class FileManagerAction extends PageAction {
 		return $c;
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "File Manager: " . $this->_page->id();
 	}
 }
@@ -2022,14 +2040,14 @@ class FileManagerAction extends PageAction {
 class UserManagementAction extends PageAction {
 	function UserManagementAction($page) {
 		$this->PageAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 
 	function loadUserNames() {
-		$db =& $this->_wiki->db();
+		$db = $this->_wiki->db();
 		$tableName = $db->usersTableName();
 
-		$qr =& $this->_wiki->query("SELECT Login FROM $tableName");
+		$qr = $this->_wiki->query("SELECT Login FROM $tableName");
 		
 		if ($qr->error() || ! $qr->hasRow()) {
 			$this->_logins = false;
@@ -2054,13 +2072,13 @@ class UserManagementAction extends PageAction {
 //
 
 class AddUserAction extends UserManagementAction {
-	function AddUserAction(&$page) {
+	function AddUserAction($page) {
 		$this->UserManagementAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
-	function content(&$outputManager) {
-		$user =& $this->_wiki->user();
+	function content($outputManager) {
+		$user = $this->_wiki->user();
 		if (! $user->isAdmin()) {
 			return "Access denied.";
 		}
@@ -2082,7 +2100,7 @@ class AddUserAction extends UserManagementAction {
 				$isAdmin = 0;
 			}
 			
-			$user =& new User($this->_wiki, $username);
+			$user = new User($this->_wiki, $username);
 			if ($user->isValid()) {
 				$error = "User already exists.";
 			} else if ($password != $password2){
@@ -2139,7 +2157,7 @@ class AddUserAction extends UserManagementAction {
 		return $c;
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "Add User";
 	}
 }
@@ -2149,13 +2167,13 @@ class AddUserAction extends UserManagementAction {
 //
 
 class ResetPasswordAction extends UserManagementAction {
-	function ResetPasswordAction(&$page) {
+	function ResetPasswordAction($page) {
 		$this->UserManagementAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
-	function content(&$outputManager) {
-		$user =& $this->_wiki->user();
+	function content($outputManager) {
+		$user = $this->_wiki->user();
 		if (! $user->isAdmin()) {
 			return "Access denied.";
 		}
@@ -2179,7 +2197,7 @@ class ResetPasswordAction extends UserManagementAction {
 				$isAdmin = 0;
 			}
 			
-			$user =& new User($this->_wiki, $username);
+			$user = new User($this->_wiki, $username);
 			if (! $user->isValid()) {
 				$error = "Unknown user.";
 			} else if ($password != $password2){
@@ -2204,7 +2222,7 @@ class ResetPasswordAction extends UserManagementAction {
 			
 			$password = $password2 = "";
 
-			$user =& new User($this->_wiki, $username);
+			$user = new User($this->_wiki, $username);
 			$isAdmin = $user->isAdmin();
 		}
 			
@@ -2246,7 +2264,7 @@ class ResetPasswordAction extends UserManagementAction {
 		return $c;
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "Reset Password";
 	}
 }
@@ -2256,13 +2274,13 @@ class ResetPasswordAction extends UserManagementAction {
 //
 
 class DeleteUserAction extends UserManagementAction {
-	function DeleteUserAction(&$page) {
+	function DeleteUserAction($page) {
 		$this->UserManagementAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
-	function content(&$outputManager) {
-		$user =& $this->_wiki->user();
+	function content($outputManager) {
+		$user = $this->_wiki->user();
 		if (! $user->isAdmin()) {
 			return "Access denied.";
 		}
@@ -2280,7 +2298,7 @@ class DeleteUserAction extends UserManagementAction {
 			$username = stripAutoSlashes($_POST["username"]);
 			
 			if (isset($_POST["confirm"])) {
-				$user =& new User($this->_wiki, $username);
+				$user = new User($this->_wiki, $username);
 				if (! $user->isValid()) {
 					$error = "Unknown user.";
 				} else if ($user->loginIs($userId)) {
@@ -2338,7 +2356,7 @@ class DeleteUserAction extends UserManagementAction {
 		return $c;
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "Delete User";
 	}
 }
@@ -2348,9 +2366,9 @@ class DeleteUserAction extends UserManagementAction {
 //
 
 class UsersAction extends UserManagementAction {
-	function UsersAction(&$page) {
+	function UsersAction($page) {
 		$this->UserManagementAction($page);
-		$this->_wiki =& $page->wiki();
+		$this->_wiki = $page->wiki();
 	}
 	
 	function userListHtml() {
@@ -2364,10 +2382,10 @@ class UsersAction extends UserManagementAction {
 			$c .= "<td>$htmlLogin</td>";
 			$resetPasswordUrl = redirect($this->_page->id(), "reset_pwd=$urlLogin");
 			$c .= "<td>&nbsp;</td>";
-			$c .= "<td><a href=\"$resetPasswordUrl\">Reset Password</a></td>";
+			$c .= "<td>" . postButton("Reset Password", $resetPasswordUrl) . "</td>";
 			$deleteUrl = redirect($this->_page->id(), "del_user=$urlLogin");
 			$c .= "<td>&nbsp;</td>";
-			$c .= "<td><a href=\"$deleteUrl\">Delete</a></td>";
+			$c .= "<td>" . postButton("Delete", $deleteUrl) . "</td>";
 			$c .= "</tr>";
 		}
 		$c .= "</table>";
@@ -2375,8 +2393,8 @@ class UsersAction extends UserManagementAction {
 		return $c;
 	}
 	
-	function content(&$outputManager) {
-		$user =& $this->_wiki->user();
+	function content($outputManager) {
+		$user = $this->_wiki->user();
 		if (! $user->isAdmin()) {
 			return "Access denied.";
 		}
@@ -2402,7 +2420,7 @@ class UsersAction extends UserManagementAction {
 		return $c;
 	}
 	
-	function title(&$outputManager) {
+	function title($outputManager) {
 		return "User List";
 	}
 }
@@ -2435,8 +2453,25 @@ if (isset($_GET["p"])) {
 	$redirect = redirect(fixOldStyleId(stripAutoSlashes($_GET["p"])), $qs);
 	header("Location: $redirect");
 	exit;
+
 } else if (isset($_GET["rewrite"])) {
 	$requestedPage = stripAutoSlashes($_GET["rewrite"]);
+
+} else if (isset($_GET["q"])) {
+	$parts = explode('/', stripAutoSlashes($_GET['q']));
+	$requestedPage = "";
+	foreach ($parts as $part) {
+		if (strlen($part) == 0) {
+			// Ignore leading and double slashes
+			continue;
+		}
+		if (stringEndsWith($part, '.html')) {
+			$requestedPage .= substr($part, 0, strlen($part) - 5);
+		} else {
+			$requestedPage .= $part . '_';
+		}
+	}
+
 } else {
 	$requestedPage = "";
 }
@@ -2459,10 +2494,10 @@ $addUserRequested = isset($_GET["add_user"]);
 $resetPasswordRequested = isset($_GET["reset_pwd"]);
 $deleteUserRequested = isset($_GET["del_user"]);
 
-$wiki =& new Wiki();
+$wiki = new Wiki();
 $page = null;
 
-$outputManager =& new OutputManager();
+$outputManager = new OutputManager();
 
 if ($overrideRequested) {
 	$user = $wiki->user();
@@ -2473,41 +2508,41 @@ if ($phpInfoRequested) {
 	phpinfo();
 	exit;
 } else if ($initRequested) {
-	$page =& new Page($wiki, "");
-	$action =& new InitPageAction($page);
+	$page = new Page($wiki, "");
+	$action = new InitPageAction($page);
 } else if ($rebuildRequested) {
-	$page =& new Page($wiki, "");
-	$action =& new RebuildPageAction($page);
+	$page = new Page($wiki, "");
+	$action = new RebuildPageAction($page);
 } else if ($listRequested) {
-	$page =& new Page($wiki, "");
-	$action =& new ListPageAction($page);
+	$page = new Page($wiki, "");
+	$action = new ListPageAction($page);
 } else if ($usersRequested) {
-	$page =& new Page($wiki, "");
-	$action =& new UsersAction($page);
+	$page = new Page($wiki, "");
+	$action = new UsersAction($page);
 } else if ($addUserRequested) {
-	$page =& new Page($wiki, "");
-	$action =& new AddUserAction($page);
+	$page = new Page($wiki, "");
+	$action = new AddUserAction($page);
 } else if ($resetPasswordRequested) {
-	$page =& new Page($wiki, "");
-	$action =& new ResetPasswordAction($page);
+	$page = new Page($wiki, "");
+	$action = new ResetPasswordAction($page);
 } else if ($deleteUserRequested) {
-	$page =& new Page($wiki, "");
-	$action =& new DeleteUserAction($page);
+	$page = new Page($wiki, "");
+	$action = new DeleteUserAction($page);
 } else {
-	$page =& new Page($wiki, $requestedPage);
+	$page = new Page($wiki, $requestedPage);
 	$noPage = ! $page->loaded();
 
 	if ($loginRequested) {
-		$action =& new LoginAction($page);
+		$action = new LoginAction($page);
 	} else if ($logoutRequested) {
-		$action =& new LogoutAction($page);
+		$action = new LogoutAction($page);
 	} else if ($fileManagerRequested) {
-		$action =& new FileManagerAction($page);
+		$action = new FileManagerAction($page);
 	} else if ($noPage || $editRequested) {
 		// If there's no existing page, or if editing was requested, show the
 		// editing form (if the user has editing permissions).
 		if ($page->userCanEdit()) {
-			$action =& new EditPageAction($page);
+			$action = new EditPageAction($page);
 			$action->setIsNew(! $page->loaded());
 		} else {
 			// The user does not have editing permissions. If they manually
@@ -2516,7 +2551,7 @@ if ($phpInfoRequested) {
 			if ($editRequested) {
 				$outputManager->addFlash("You are not permited to edit this page.");
 			} else {
-				$action =& new NoPageAction($page);
+				$action = new NoPageAction($page);
 			}
 		}
 	} 
@@ -2533,12 +2568,12 @@ if (isset($_GET["perms"])) {
 if (! isset($action)) {
 	$user = $wiki->user();
 	if ($page->userCanView()) {
-		$action =& new ViewPageAction($page);
+		$action = new ViewPageAction($page);
 	} else if (! $user->isValid()) {
 		$outputManager->addFlash("You must sign in to view this page.");
-		$action =& new LoginAction($page);
+		$action = new LoginAction($page);
 	} else {
-		$action =& new PrivatePageAction($page);
+		$action = new PrivatePageAction($page);
 	}
 }
 
@@ -2554,7 +2589,7 @@ if (! $templateName) {
 	$templateName = "template.php";
 }
 
-$template =& new OutputTemplate($wiki->pathToFolder($templateName));
+$template = new OutputTemplate($wiki->pathToFolder($templateName));
 $outputManager->emit($template);
 
 ?>
